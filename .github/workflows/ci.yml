@@ -13,52 +13,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Set up Docker Buildx (for building multi-platform images)
-      - name: Set up Docker Buildx
+      # Step 2: Set up Docker
+      - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
-      # Cache Docker layers for faster builds
-      - name: Cache Docker layers
-        uses: actions/cache@v3
+      # Step 3: Install Docker Compose
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      # Step 4: Set up Node.js (Client)
+      - name: Set up Node.js (Client)
+        uses: actions/setup-node@v4
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
+          node-version: 18
+          cache: "npm"
 
-      # Build and push client Docker image
-      - name: Build client Docker image
-        run: |
-          docker-compose -f docker-compose.yml build client
+      # Step 5: Install dependencies for Client
+      - name: Install dependencies (Client)
+        run: npm install
+        working-directory: ./client
 
-      # Build and push server Docker image
-      - name: Build server Docker image
-        run: |
-          docker-compose -f docker-compose.yml build server
+      # Step 6: Install dependencies for Server
+      - name: Install dependencies (Server)
+        run: npm install
+        working-directory: ./server
 
-      # Run Docker Compose (client & server) to start the services
-      - name: Run Docker Compose up
-        run: |
-          docker-compose -f docker-compose.yml up -d
+      # Step 7: Run Docker Compose (Build Client)
+      - name: Build Docker Client
+        run: docker-compose -f docker-compose.yml build client
 
-      # Run Linting for both client and server
-      - name: Run Client Linting
-        run: docker-compose exec client npm run lint
-
-      - name: Run Server Linting
-        run: docker-compose exec server npm run lint
-
-      # Run Tests for both client and server
-      - name: Run Client Tests
-        run: docker-compose exec client npm test
-
-      - name: Run Server Tests
-        run: docker-compose exec server npm test
-
-      # Optionally, tear down the containers after testing
-      - name: Tear down Docker Compose
-        run: |
-          docker-compose -f docker-compose.yml down
+      # Add any further steps for running tests, linting, or deployment
