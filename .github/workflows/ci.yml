@@ -16,40 +16,49 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      # Set up Docker Buildx (for building multi-platform images)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Cache Docker layers for faster builds
+      - name: Cache Docker layers
+        uses: actions/cache@v3
         with:
-          node-version: 18
-          cache: "npm"
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
-      - name: Install dependencies (Client)
-        run: npm install
-        working-directory: ./client
+      # Build and push client Docker image
+      - name: Build client Docker image
+        run: |
+          docker-compose -f docker-compose.yml build client
 
-      - name: Install dependencies (Server)
-        run: npm install
-        working-directory: ./server
+      # Build and push server Docker image
+      - name: Build server Docker image
+        run: |
+          docker-compose -f docker-compose.yml build server
 
+      # Run Docker Compose (client & server) to start the services
+      - name: Run Docker Compose up
+        run: |
+          docker-compose -f docker-compose.yml up -d
+
+      # Run Linting for both client and server
       - name: Run Client Linting
-        run: npm run lint
-        working-directory: ./client
+        run: docker-compose exec client npm run lint
 
       - name: Run Server Linting
-        run: npm run lint
-        working-directory: ./server
+        run: docker-compose exec server npm run lint
 
+      # Run Tests for both client and server
       - name: Run Client Tests
-        run: npm test
-        working-directory: ./client
+        run: docker-compose exec client npm test
 
       - name: Run Server Tests
-        run: npm test
-        working-directory: ./server
+        run: docker-compose exec server npm test
 
-      - name: Build the Client
-        run: npm run build
-        working-directory: ./client
-
-      - name: Build the Server
-        run: npm run build
-        working-directory: ./server
+      # Optionally, tear down the containers after testing
+      - name: Tear down Docker Compose
+        run: |
+          docker-compose -f docker-compose.yml down

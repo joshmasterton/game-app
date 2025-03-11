@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "tsx watch ./src/app.ts",
     "build": "tsc",
-    "test": "vitest"
+    "test": "vitest",
+    "lint": "eslint . --fix"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
