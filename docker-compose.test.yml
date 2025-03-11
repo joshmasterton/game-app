@@ -5,11 +5,14 @@ services:
       - ./client/src:/app/src
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - NODE_ENV=test
     command: npm run test
   server:
     build: ./server
     volumes:
       - ./server/src:/app/src
     environment:
+      - NODE_ENV=test
       - CHOKIDAR_USEPOLLING=true
+      - CI=false
     command: npm run test

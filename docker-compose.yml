@@ -7,6 +7,8 @@ services:
       - ./client/src:/app/src
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - NODE_ENV=development
+    command: npm run dev
   server:
     build: ./server
     ports:
@@ -14,4 +16,7 @@ services:
     volumes:
       - ./server/src:/app/src
     environment:
+      - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
+      - CI=false
+    command: npm run dev
